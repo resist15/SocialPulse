@@ -1,82 +1,64 @@
-from typing import Optional
 from fastapi import Depends, FastAPI, Response, status, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from . import models
-from .database import SessionLocal, engine
-
+from .database import engine, get_db
+from . import schemas
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
-class Post(BaseModel):
-    title: str
-    content: str
-    published: bool = True
-    rating: Optional[int] = None
-
-
-my_posts = [{"title": "title of post 1", "content": "content of post 1","id": 1},{"title": "favorite foods","content": "i like pizza", "id": 2}]
-
-
-def find_post(id):
-    for p in my_posts:
-        if p["id"] == id:
-            return p
-
-def find_index_post(id):
-    for i,p in enumerate(my_posts):
-        if p['id'] == id:
-            return i
+# Get All Posts
 
 @app.get('/posts')
-def get_post():
-    return {"data": my_posts}
+def get_post_all(db: Session = Depends(get_db)):
+    posts = db.query(models.Post).all()
+    return {"data": posts}
+
+# Create Post Endpoint
 
 @app.post('/posts', status_code=status.HTTP_201_CREATED)
-def create_post(new_post: Post):
-    my_posts.append(new_post.model_dump())
-    return {"title is": f"{new_post.title}",
-            "content is": f"{new_post.content}"}
+def create_post(post: schemas.Post, db: Session = Depends(get_db)):
+    new_post = models.Post(**post.model_dump())
+    db.add(new_post)
+    db.commit()
+    db.refresh(new_post)
+    return {"data": new_post}
+
+# Get Single Post
 
 @app.get("/posts/{id}")
-def get_post_single(id: int):
+def get_post_single(id: int, db: Session = Depends(get_db)):
 
-    post = find_post(id)
+    post = db.query(models.Post).filter(models.Post.id == id).first()
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f"Post with id {id} not found")
     return {"post_detail": post}
 
+# Delete Post by specific id
 
 @app.delete("/posts/{id}",status_code=status.HTTP_204_NO_CONTENT)
-def delete_post(id: int):
-    index = find_index_post(id)
-    if index == None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f'Post with id {id} not found')
-    my_posts.pop(index)
+def delete_post(id: int, db: Session = Depends(get_db)):
+
+    post = db.query(models.Post).filter(models.Post.id == id)
+
+    if post.first() == None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f'post with id {id} not found')
+    post.delete(synchronize_session=False)
+    db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
+# Update Post with Specific id
 
 @app.put("/posts/{id}")
-def update_post(id: int, post: Post):
+def update_post(id: int, post: schemas.Post, db: Session = Depends(get_db)):
 
-    index = find_index_post(id)
-    if index == None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"post with id {id} not found")
-    post_dict = post.model_dump()
-    print(type(post_dict))
-    post_dict['id'] = id
-    my_posts[index] = post_dict
-    return {"message": post_dict}
+    post_query = db.query(models.Post).filter(models.Post.id == id)
+    update_post = post_query.first()
+    if update_post == None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f'post with id {id} not found')
 
-@app.get('/test_db')
-def test_posts(db: Session = Depends(get_db)):
-    return {"status": "success"}
+    post_query.update(post.model_dump(),synchronize_session=False)
+    db.commit()
+
+    return {"message": post_query.first()}
