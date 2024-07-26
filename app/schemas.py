@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from datetime import datetime
 
 # Request Schemas
 class PostBase(BaseModel):
@@ -10,9 +11,8 @@ class PostCreate(PostBase):
     pass
 
 # Response Schemas
-class PostResponse(BaseModel):
-    title: str
-    content: str
-    published: bool
+class PostResponse(PostBase):
+    id: int
+    created_at: datetime
     class Config:
         orm_mode = True

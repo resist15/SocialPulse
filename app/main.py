@@ -1,15 +1,17 @@
+from typing import List
 from fastapi import Depends, FastAPI, Response, status, HTTPException
 from sqlalchemy.orm import Session
 from . import models
 from .database import engine, get_db
 from . import schemas
+
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
 # Get All Posts
 
-@app.get('/posts')
+@app.get('/posts',response_model=List[schemas.PostResponse])
 def get_post_all(db: Session = Depends(get_db)):
     posts = db.query(models.Post).all()
     return posts
@@ -26,7 +28,7 @@ def create_post(post: schemas.PostCreate, db: Session = Depends(get_db)):
 
 # Get Single Post
 
-@app.get("/posts/{id}")
+@app.get("/posts/{id}",response_model=schemas.PostResponse)
 def get_post_single(id: int, db: Session = Depends(get_db)):
 
     post = db.query(models.Post).filter(models.Post.id == id).first()
@@ -49,7 +51,7 @@ def delete_post(id: int, db: Session = Depends(get_db)):
 
 # Update Post with Specific id
 
-@app.put("/posts/{id}")
+@app.put("/posts/{id}",response_model=schemas.PostResponse)
 def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db)):
 
     post_query = db.query(models.Post).filter(models.Post.id == id)
