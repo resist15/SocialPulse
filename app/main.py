@@ -1,16 +1,12 @@
 from typing import List
 from fastapi import Depends, FastAPI, Response, status, HTTPException
 from sqlalchemy.orm import Session
-from . import models
+from . import models, schemas, utils
 from .database import engine, get_db
-from . import schemas
-from passlib.context import CryptContext
 
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
-
-pwd_context = CryptContext(schemes=["bcrypt"],deprecated="auto")
 
 # Get All Posts
 
@@ -73,7 +69,7 @@ def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
 
     # Password hashing from user.password
-    secure_pass = pwd_context.hash(user.password)
+    secure_pass = utils.hash(user.password)
     user.password = secure_pass
     new_user = models.User(**user.model_dump())
     db.add(new_user)
