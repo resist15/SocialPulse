@@ -4,10 +4,13 @@ from sqlalchemy.orm import Session
 from . import models
 from .database import engine, get_db
 from . import schemas
+from passlib.context import CryptContext
 
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+pwd_context = CryptContext(schemes=["bcrypt"],deprecated="auto")
 
 # Get All Posts
 
@@ -68,6 +71,10 @@ def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db)
 
 @app.post('/users', status_code=status.HTTP_201_CREATED,response_model=schemas.UserResponse)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+
+    # Password hashing from user.password
+    secure_pass = pwd_context.hash(user.password)
+    user.password = secure_pass
     new_user = models.User(**user.model_dump())
     db.add(new_user)
     db.commit()
