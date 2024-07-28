@@ -18,6 +18,12 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
 
+
+# Auth Request schema
+class UserAuth(BaseModel):
+    email: EmailStr
+    password: str
+
 ''' Response Schemas '''
 
 # Post Response Model
