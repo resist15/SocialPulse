@@ -27,19 +27,25 @@ class UserAuth(BaseModel):
 
 ''' Response Schemas '''
 
-# Post Response Model
-class PostResponse(PostBase):
-    id: int
-    created_at: datetime
-    owner_id: int
-    class Config:
-        from_attributes = True
-
 # User Response Model
 class UserResponse(BaseModel):
     id: int
     email: EmailStr
     created_at: datetime
+    class Config:
+        from_attributes = True
+
+class UserResPost(BaseModel):
+    id: int
+    email: EmailStr
+    class Config:
+        from_attributes = True
+
+# Post Response Model
+class PostResponse(PostBase):
+    id: int
+    created_at: datetime
+    owner: UserResPost
     class Config:
         from_attributes = True
 
