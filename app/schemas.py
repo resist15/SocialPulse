@@ -19,11 +19,14 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
 
-
 # Auth Request schema
 class UserAuth(BaseModel):
     email: EmailStr
     password: str
+
+class Vote(BaseModel):
+    post_id: int
+    dir: bool
 
 ''' Response Schemas '''
 
@@ -46,6 +49,12 @@ class PostResponse(PostBase):
     id: int
     created_at: datetime
     owner: UserResPost
+    class Config:
+        from_attributes = True
+
+class PostOut(BaseModel):
+    Post: PostResponse
+    likes: int
     class Config:
         from_attributes = True
 
