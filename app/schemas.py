@@ -35,13 +35,13 @@ class UserResponse(BaseModel):
     id: int
     email: EmailStr
     created_at: datetime
-    class Config:
+    class ConfigDict:
         from_attributes = True
 
 class UserResPost(BaseModel):
     id: int
     email: EmailStr
-    class Config:
+    class ConfigDict:
         from_attributes = True
 
 # Post Response Model
@@ -49,13 +49,13 @@ class PostResponse(PostBase):
     id: int
     created_at: datetime
     owner: UserResPost
-    class Config:
+    class ConfigDict:
         from_attributes = True
 
 class PostOut(BaseModel):
     Post: PostResponse
     likes: int
-    class Config:
+    class ConfigDict:
         from_attributes = True
 
 ''' Token Schema'''
